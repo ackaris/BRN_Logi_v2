@@ -4,8 +4,7 @@ import gui
 import product
 import models
 
-#Programmed For Yigit Can Kara by ACK with <3 .
-#do not touch anything but this file you will probablzy breake it if you do :)
+#do not touch anything but this file you will probably breake it if you do :)
 
 container1= container.container(240, 1200, 269) #container boyutlarını belirle
 '''Model id: Kafana göre
