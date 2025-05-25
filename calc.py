@@ -3,30 +3,36 @@ import product
 import layer
 
 
-def calc(container1,model1):
-
+def calc():
     vurducounter=0
     for i in product.product_lib:
-        max_product_per_layer = round(container1.width / (i.model.r * 2))
-        if container.container_mem[-1].cont_occ_lenth<=container.container_mem[-1].len:
-            if container.container_mem[-1].active_coulmn==0:
-                layer.create_coulumn(i,max_product_per_layer,container.container_mem[-1])
-            layer.add_product_to_layer(i,max_product_per_layer,container.container_mem[-1])
+        if container.container_mem[-1].cont_occ_lenth<= container.container_mem[-1].len: #Kolonun tırın uzunluğunda kapladığı alan(max)
+            if container.container_mem[-1].active_coulmn==0: #initiation için sadece progam çalışırken 0 sonra 1,2,3 diye gider
+                layer.create_coulumn(i, container.container_mem[-1])
+            layer.add_product_to_layer(i, container.container_mem[-1])
         else:
-            print('vurdu1')
-            vurducounter+=1
-            if vurducounter==0:
-                layer.create_coulumn(i, max_product_per_layer, container.container_mem[-1])
-            if len(container.container_mem[-1].coulmn_layers)<3:
-                print('geldi')
-                layer.add_product_to_layer(i, max_product_per_layer, container.container_mem[-1])
-                print(container.container_mem[-1].coulmn_layers)
+            print('Data')
+            print(container.container_mem[-1].len - container.container_mem[-1].cont_occ_lenth + i.model.h)
+            if i.model.pack_type==0 and container.container_mem[-1].len- container.container_mem[-1].cont_occ_lenth+i.model.h>i.model.r:
+                vurducounter+=1
+                if vurducounter==0:
+                    layer.create_coulumn(i, container.container_mem[-1])
+                if len(container.container_mem[-1].coulmn_layers)<3:
+                    layer.add_product_to_layer(i, container.container_mem[-1])
+                elif len(container.container_mem[-1].coulmn_layers)==3:
+                    container.container_mem[-1].coulms_mem.append(container.container_mem[-1].coulmn_layers)
+                    container.create_continer(container.container_mem[-1].width, container.container_mem[-1].len,
+                                              container.container_mem[-1].height)
+                    if container.container_mem[-1].active_coulmn == 0:
+                        layer.create_coulumn(i, container.container_mem[-1])
+                    layer.add_product_to_layer(i, container.container_mem[-1])
             else:
                 container.container_mem[-1].coulms_mem.append(container.container_mem[-1].coulmn_layers)
-                container.create_continer(container.container_mem[-1].width,container.container_mem[-1].len,container.container_mem[-1].height)
+                container.create_continer(container.container_mem[-1].width, container.container_mem[-1].len,
+                                          container.container_mem[-1].height)
                 if container.container_mem[-1].active_coulmn==0:
-                    layer.create_coulumn(i,max_product_per_layer,container.container_mem[-1])
-                layer.add_product_to_layer(i, max_product_per_layer, container.container_mem[-1])
+                    layer.create_coulumn(i, container.container_mem[-1])
+                layer.add_product_to_layer(i, container.container_mem[-1])
 
 
     container.container_mem[-1].coulms_mem.append(container.container_mem[-1].coulmn_layers)
@@ -63,16 +69,36 @@ def showplot(container1):
 
             for j in i:
                 layer_prodcount = 0
+
                 x_coord = 0
+                y_coord=0
                 for prod in j.products:
-                    if j.type == 1 and layer_prodcount == 0:
-                        x_coord += prod.model.r
-                    elif j.type == 1:
-                        x_coord += prod.model.r * 2
-                    elif j.type == 2:
-                        x_coord += prod.model.r * 2
-                    circle = patches.Circle((x_coord, j.height), prod.model.r, linewidth=2, edgecolor='blue',
-                                            facecolor='none')
+                    if prod.model.pack_type==0:
+                        if j.type == 1 and layer_prodcount == 0:
+                            x_coord += prod.model.r
+                        elif j.type == 1:
+                            x_coord += prod.model.r * 2
+                        elif j.type == 2:
+                            x_coord += prod.model.r * 2
+                    elif prod.model.pack_type==1 and layer_prodcount!=0:
+                        x_coord+=prod.model.r
+                        y_coord=j.height
+
+                    elif prod.model.pack_type==1 and layer_prodcount==0:
+                        x_coord+=0
+                        y_coord=j.height
+
+                    if prod.model.pack_type==0:
+                        circle = patches.Circle((x_coord, j.height), prod.model.r, linewidth=2, edgecolor='blue',
+                                                facecolor='none')
+                    elif prod.model.pack_type==1:
+                        if container.container_mem[0].width - j.layer_occ_width+prod.model.r > prod.model.r and i.index(j)==0 and j.products.index(prod)==len(j.products)-1 and j.products[0]!=prod:
+                            circle = patches.Rectangle((j.layer_occ_width-prod.model.r, 0), prod.model.r, prod.model.long_Egde,
+                                                       linewidth=2, edgecolor='blue',
+                                                       facecolor='none')
+                        else:
+                            circle =patches.Rectangle((x_coord,y_coord), prod.model.long_Egde,prod.model.r, linewidth=2, edgecolor='blue',
+                                                facecolor='none')
                     ax[row_idx][col_idx].add_patch(circle)
                     layer_prodcount += 1
                     total_product_in_cont += 1
@@ -111,3 +137,12 @@ def print_stats():
             print(i)
             for j in i:
                 print(len(j.products))
+
+def volume_left():
+    capacities=[]
+    for i in container.container_mem:
+        calculation=100*((i.cont_occ_lenth * i.width * i.height - i.coulmn_heights[-1] * i.coulms_mem[-1][-1].length * i.width)/(i.width * i.height * i.len))
+        if calculation>100:
+            calculation=100
+        capacities.append( calculation)
+    return capacities
